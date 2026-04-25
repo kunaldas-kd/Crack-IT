@@ -1,0 +1,13 @@
+directories:
+  output: release
+  buildResources: build
+appId: com.crackit.frontend
+productName: Crack-IT
+win:
+  target:
+    - nsis
+files:
+  - filter:
+      - dist/**/*
+      - electron/**/*
+electronVersion: 29.4.6
