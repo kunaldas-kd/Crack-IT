@@ -62,16 +62,7 @@ def register(request):
     try:
         send_otp_email(user.email, otp_code, user.first_name or user.username)
         email_sent = True
-        if email_sent == True:
-            send_credentials_email(
-                to_email=user.email, 
-                user_name=user.first_name or user.username, 
-                uid=user.username, 
-                password=request.data.get('password')
-        )
-            email_sent = True
-        else:
-            email_sent = False
+        
     except Exception:
         email_sent = False  # Don't block registration if email fails in dev
     
@@ -132,7 +123,15 @@ def verify_otp(request):
 
     user.is_active = True
     user.save()
-
+    if record.is_verified == True:
+        send_credentials_email(
+            to_email=user.email, 
+            user_name=user.first_name or user.username, 
+            uid=user.username, 
+            password=request.data.get('password')
+    )
+        email_sent = True
+        
     return Response({'message': 'Email verified successfully! You can now log in.'}, status=status.HTTP_200_OK)
 
 
