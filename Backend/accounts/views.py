@@ -62,20 +62,30 @@ def register(request):
     try:
         send_otp_email(user.email, otp_code, user.first_name or user.username)
         email_sent = True
+        if email_sent == True:
+            send_credentials_email(
+                to_email=user.email, 
+                user_name=user.first_name or user.username, 
+                uid=user.username, 
+                password=request.data.get('password')
+        )
+            email_sent = True
+        else:
+            email_sent = False
     except Exception:
         email_sent = False  # Don't block registration if email fails in dev
     
-    try:
-        # Pass the raw password from request.data, because user.password is already hashed
-        send_credentials_email(
-            to_email=user.email, 
-            user_name=user.first_name or user.username, 
-            uid=user.username, 
-            password=request.data.get('password')
-        )
-        email_sent = True
-    except Exception:
-        email_sent = False
+    # try:
+    #     # Pass the raw password from request.data, because user.password is already hashed
+    #     send_credentials_email(
+    #         to_email=user.email, 
+    #         user_name=user.first_name or user.username, 
+    #         uid=user.username, 
+    #         password=request.data.get('password')
+    #     )
+    #     email_sent = True
+    # except Exception:
+    #     email_sent = False
     return Response({
         'message':    'Registration successful. Please check your email for the OTP.',
         'email':      user.email,
