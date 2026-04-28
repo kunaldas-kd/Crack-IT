@@ -124,7 +124,10 @@ function DirectoryTab({ students, loading, showForm, setShowForm, onAdded }) {
     e.preventDefault();
     setSaving(true); setErr(null);
     try {
-      await api.post('/students/students/', form);
+      const payload = { ...form };
+      if (!payload.batch) payload.batch = null;
+      if (!payload.institution) payload.institution = null;
+      await api.post('/students/students/', payload);
       setForm(EMPTY_STUDENT);
       setShowForm(false);
       onAdded();
@@ -184,15 +187,43 @@ function DirectoryTab({ students, loading, showForm, setShowForm, onAdded }) {
               <input required className="form-input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
             </div>
             <div className="form-group">
+              <label className="form-label">Gender</label>
+              <select required className="form-input" value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Date of Birth</label>
+              <input required type="date" className="form-input" value={form.date_of_birth} onChange={e => setForm({ ...form, date_of_birth: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Address</label>
+              <input required className="form-input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Admission Date</label>
+              <input required type="date" className="form-input" value={form.admission_date} onChange={e => setForm({ ...form, admission_date: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Status</label>
+              <select required className="form-input" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Graduated">Graduated</option>
+              </select>
+            </div>
+            <div className="form-group">
               <label className="form-label">Batch</label>
-              <select className="form-input" value={form.batch} onChange={e => setForm({ ...form, batch: e.target.value })}>
+              <select className="form-input" value={form.batch || ''} onChange={e => setForm({ ...form, batch: e.target.value })}>
                 <option value="">Select Batch</option>
                 {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label className="form-label">Institution</label>
-              <select className="form-input" value={form.institution} onChange={e => setForm({ ...form, institution: e.target.value })}>
+              <select className="form-input" value={form.institution || ''} onChange={e => setForm({ ...form, institution: e.target.value })}>
                 <option value="">Select Institution</option>
                 {institutions.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
               </select>
