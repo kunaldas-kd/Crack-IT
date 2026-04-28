@@ -14,6 +14,7 @@ import StudentsHub from './pages/Students';
 import StudentProfile from './pages/StudentProfile';
 import StudentEdit from './pages/StudentEdit';
 import BatchesHub from './pages/Batches';
+import TeachersHub from './pages/Teachers';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
@@ -31,6 +32,7 @@ const NAV = [
   { to: '/institutes', label: 'Institutes', icon: '🏫', pub: false, hideOnAuth: false, featureFlag: 'Multi_Institution_Support' },
   { to: '/batches', label: 'Batches', icon: '🎓', pub: false, hideOnAuth: false, featureFlag: 'Course_and_Batch_Management' },
   { to: '/students', label: 'Students', icon: '👨‍🎓', pub: false, hideOnAuth: false, featureFlag: 'Student_Management' },
+  { to: '/teachers', label: 'Teachers', icon: '👨‍🏫', pub: false, hideOnAuth: false, featureFlag: 'Staff_Management' },
   { to: '/about', label: 'About', icon: '📖', pub: true, hideOnAuth: true },
   { to: '/contact', label: 'Contact', icon: '✉️', pub: true, hideOnAuth: true },
 ];
@@ -126,6 +128,7 @@ function AppShell() {
           <Route path="/students" element={<ProtectedRoute><StudentsHub /></ProtectedRoute>} />
           <Route path="/students/:id" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
           <Route path="/students/:id/edit" element={<ProtectedRoute><StudentEdit /></ProtectedRoute>} />
+          <Route path="/teachers" element={<ProtectedRoute><TeachersHub /></ProtectedRoute>} />
         </Routes>
       </div>
     </div>
