@@ -49,34 +49,32 @@ def register(request):
     user.is_active = False
     user.save()
 
-    # Create user profile with optional institute name
-    institute_name = request.data.get('institute_name', '').strip()
-    UserProfile.objects.create(user=user, institute_name=institute_name)
+    # Create user profile (institute link is set up after institution is created)
+    UserProfile.objects.create(user=user)
 
     # Generate & persist OTP
     otp_code, _ = otp_generator()
     expires_at = timezone.now() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
     OTPRecord.objects.create(user=user, otp_code=otp_code, expires_at=expires_at)
 
-    # Send email (if EMAIL_HOST_USER is configured)
+    # Send OTP verification email
     try:
         send_otp_email(user.email, otp_code, user.first_name or user.username)
         email_sent = True
-        
     except Exception:
         email_sent = False  # Don't block registration if email fails in dev
-    
-    # try:
-    #     # Pass the raw password from request.data, because user.password is already hashed
-    #     send_credentials_email(
-    #         to_email=user.email, 
-    #         user_name=user.first_name or user.username, 
-    #         uid=user.username, 
-    #         password=request.data.get('password')
-    #     )
-    #     email_sent = True
-    # except Exception:
-    #     email_sent = False
+
+    # Send credentials email now — raw password is only available here before hashing
+    try:
+        send_credentials_email(
+            to_email=user.email,
+            user_name=user.first_name or user.username,
+            uid=user.username,
+            password=request.data.get('password'),  # raw password, available only at this step
+        )
+    except Exception:
+        pass  # Non-critical: don't block registration if this fails
+
     return Response({
         'message':    'Registration successful. Please check your email for the OTP.',
         'email':      user.email,
@@ -123,15 +121,7 @@ def verify_otp(request):
 
     user.is_active = True
     user.save()
-    if record.is_verified == True:
-        send_credentials_email(
-            to_email=user.email, 
-            user_name=user.first_name or user.username, 
-            uid=user.username, 
-            password=request.data.get('password')
-    )
-        email_sent = True
-        
+
     return Response({'message': 'Email verified successfully! You can now log in.'}, status=status.HTTP_200_OK)
 
 
@@ -217,7 +207,7 @@ def otp_login_verify(request):
     Body: { identifier, otp_code }
     """
     identifier = request.data.get('identifier', '').strip()
-    otp_code   = request.data.get('otp_code', '').strip()
+    otp_code   = request.data.get('otp_code', '').strip()  # strip whitespace to avoid copy-paste issues
 
     if not identifier or not otp_code:
         return Response({'error': 'Identifier and OTP code are required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -239,25 +229,31 @@ def otp_login_verify(request):
     if record.is_expired():
         return Response({'error': 'OTP has expired.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    if record.otp_code != otp_code:
+    if record.otp_code.strip() != otp_code:
         return Response({'error': 'Invalid OTP code.'}, status=status.HTTP_400_BAD_REQUEST)
 
     # Success: Mark verified
     record.is_verified = True
     record.save()
 
-    # Generate JWT Tokens
-    refresh = RefreshToken.for_user(user)
-    
+    # Generate JWT Tokens using the same custom serializer logic
+    from accounts.serializers import CustomTokenObtainPairSerializer
+    refresh = CustomTokenObtainPairSerializer.get_token(user)
+
     remember = request.data.get('remember', False)
     if remember:
         refresh.set_exp(lifetime=timedelta(days=30))
     else:
         refresh.set_exp(lifetime=timedelta(days=1))
-    
+
     return Response({
         'refresh': str(refresh),
         'access': str(refresh.access_token),
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+        'admin_id': refresh.get('admin_id'),
+        'institution_id': refresh.get('institution_id'),
     }, status=status.HTTP_200_OK)
 
 

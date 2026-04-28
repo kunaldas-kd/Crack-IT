@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../api/axios';
@@ -11,6 +11,8 @@ export default function Login() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
   const { loginUser } = useContext(AuthContext);
   const location = useLocation();
   const justVerified = location.state?.verified === true;
@@ -20,6 +22,13 @@ export default function Login() {
     setMessage('');
     setLoading(false);
   };
+
+  // Resend countdown timer
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+    const t = setTimeout(() => setResendCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCountdown]);
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
@@ -56,10 +65,26 @@ export default function Login() {
       const res = await api.post('/accounts/login/otp/request/', { identifier: form.identifier });
       setMessage(res.data.message);
       setOtpStep(2);
+      setResendCountdown(60); // start 60s cooldown
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to request OTP.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResending(true);
+    setError('');
+    setMessage('');
+    try {
+      await api.post('/accounts/login/otp/request/', { identifier: form.identifier });
+      setMessage('A new OTP has been sent to your email.');
+      setResendCountdown(60);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Could not resend OTP.');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -195,6 +220,31 @@ export default function Login() {
                   <button type="submit" className="btn btn-primary" style={{ width:'100%', padding:'0.8rem', fontSize:15 }} disabled={loading}>
                     {loading ? <span className="spinner" /> : 'Verify & Log In'}
                   </button>
+
+                  {/* Resend OTP */}
+                  <div style={{ textAlign: 'center', fontSize: 13, marginTop: '0.25rem' }}>
+                    <span style={{ color: 'var(--text-3)' }}>Didn't receive it? </span>
+                    {resendCountdown > 0 ? (
+                      <span style={{ color: 'var(--text-3)' }}>
+                        Resend in <strong style={{ color: 'var(--blue)' }}>{resendCountdown}s</strong>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={resending}
+                        style={{
+                          background: 'none', border: 'none',
+                          color: 'var(--blue)', fontWeight: 600,
+                          cursor: 'pointer', padding: 0,
+                          fontFamily: 'var(--font)', fontSize: 13,
+                        }}
+                      >
+                        {resending ? 'Sending…' : 'Resend Code'}
+                      </button>
+                    )}
+                  </div>
+
                   <button type="button" className="btn btn-ghost" style={{ width:'100%', fontSize: 13 }} onClick={() => setOtpStep(1)}>
                     ← Use a different account
                   </button>

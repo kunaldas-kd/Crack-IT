@@ -26,6 +26,9 @@ export const AuthProvider = ({ children }) => {
         authenticated: true,
         uid: payload?.username || payload?.user_id || 'User',
         user_id: payload?.user_id,
+        first_name: payload?.first_name || '',
+        last_name: payload?.last_name || '',
+        email: payload?.email || '',
       });
     }
   }, []);
@@ -38,6 +41,9 @@ export const AuthProvider = ({ children }) => {
       authenticated: true,
       uid: payload?.username || payload?.user_id || 'User',
       user_id: payload?.user_id,
+      first_name: payload?.first_name || '',
+      last_name: payload?.last_name || '',
+      email: payload?.email || '',
     });
     navigate('/dashboard');
   };

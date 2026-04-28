@@ -50,8 +50,9 @@ class StudentViewSet(TenantAwareViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Base queryset with related models pre-fetched to avoid N+1 queries
-        qs = Student.objects.select_related('batch', 'institution', 'user')
+        # Start with the tenant-filtered queryset from TenantAwareMixin,
+        # then layer on the select_related to avoid N+1 queries.
+        qs = super().get_queryset().select_related('batch', 'institution', 'user')
 
         # For detail view, prefetch all nested relations for the full profile
         if self.action == 'retrieve':

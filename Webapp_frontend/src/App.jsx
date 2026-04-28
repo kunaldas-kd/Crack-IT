@@ -83,10 +83,14 @@ function Sidebar() {
             <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Signed In As</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg, var(--blue), #3B82F6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#fff', fontWeight: 800, flexShrink: 0 }}>
-                {user?.uid?.charAt(2) || 'A'}
+                {(user?.first_name?.charAt(0) || user?.uid?.charAt(0) || 'A').toUpperCase()}
               </div>
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>{user?.uid || 'Admin'}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', lineHeight: 1.2 }}>
+                  {user?.first_name || user?.last_name
+                    ? `${user.first_name} ${user.last_name}`.trim()
+                    : user?.uid || 'Admin'}
+                </div>
                 <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 1 }}>Administrator</div>
               </div>
             </div>
