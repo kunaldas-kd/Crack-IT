@@ -115,7 +115,7 @@ function DirectoryTab({ students, loading, showForm, setShowForm, onAdded }) {
     api.get('/batches/')
       .then(r => setBatches(r.data.results || r.data))
       .catch(() => { });
-    api.get('/institutes/institutes/')
+    api.get('/institutes/')
       .then(r => setInstitutions(r.data.results || r.data))
       .catch(() => { });
   }, []);
@@ -127,7 +127,7 @@ function DirectoryTab({ students, loading, showForm, setShowForm, onAdded }) {
       const payload = { ...form };
       if (!payload.batch) payload.batch = null;
       if (!payload.institution) payload.institution = null;
-      await api.post('/students/students/', payload);
+      await api.post('/students/', payload);
       setForm(EMPTY_STUDENT);
       setShowForm(false);
       onAdded();
@@ -141,7 +141,7 @@ function DirectoryTab({ students, loading, showForm, setShowForm, onAdded }) {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Permanent delete?")) return;
-    await api.delete(`/students/students/${id}/`);
+    await api.delete(`/students/${id}/`);
     onAdded();
   };
 
@@ -215,17 +215,19 @@ function DirectoryTab({ students, loading, showForm, setShowForm, onAdded }) {
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Batch</label>
-              <select className="form-input" value={form.batch || ''} onChange={e => setForm({ ...form, batch: e.target.value })}>
-                <option value="">Select Batch</option>
-                {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              <label className="form-label">Institution</label>
+              <select required className="form-input" value={form.institution || ''} onChange={e => setForm({ ...form, institution: e.target.value, batch: '' })}>
+                <option value="">Select Institution First</option>
+                {institutions.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Institution</label>
-              <select className="form-input" value={form.institution || ''} onChange={e => setForm({ ...form, institution: e.target.value })}>
-                <option value="">Select Institution</option>
-                {institutions.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+              <label className="form-label">Batch</label>
+              <select required className="form-input" value={form.batch || ''} onChange={e => setForm({ ...form, batch: e.target.value })} disabled={!form.institution}>
+                <option value="">Select Batch</option>
+                {batches
+                  .filter(b => String(b.institution) === String(form.institution))
+                  .map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 12, marginTop: 10 }}>
@@ -305,7 +307,7 @@ export default function StudentsHub() {
   const [showForm, setShowForm] = useState(false);
   const fetchStudents = useCallback(() => {
     setLoading(true);
-    api.get('/students/students/')
+    api.get('/students/')
       .then(r => setStudents(r.data.results || r.data))
       .catch(() => { })
       .finally(() => setLoading(false));

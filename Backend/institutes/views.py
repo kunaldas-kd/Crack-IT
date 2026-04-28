@@ -23,19 +23,42 @@ class TenantAwareMixin:
     
     def get_queryset(self):
         qs = super().get_queryset()
+        inst_param = self.request.query_params.get('institution')
+        
         if getattr(self.request.user, 'is_superuser', False):
+            if inst_param:
+                qs = qs.filter(institution_id=inst_param)
             return qs
-        admin_id, inst_id = get_tenant_context(self.request.user)
-        if admin_id and inst_id:
-            return qs.filter(admin_id=admin_id, institution_id=inst_id)
+
+        # If user is an admin of institutes, let them see data for all their institutes
+        if self.request.user.institutes.exists():
+            qs = qs.filter(admin_id=self.request.user.id)
+            if inst_param:
+                qs = qs.filter(institution_id=inst_param)
+            return qs
+            
+        # If user is a staff member (has a profile linked to one institute)
+        if hasattr(self.request.user, 'userprofile') and self.request.user.userprofile.institute:
+            inst = self.request.user.userprofile.institute
+            qs = qs.filter(admin_id=inst.admin_id, institution_id=inst.id)
+            if inst_param and str(inst_param) != str(inst.id):
+                return qs.none() # Cannot request data for an institute they don't belong to
+            return qs
+            
         return qs.none()
 
     def perform_create(self, serializer):
         if getattr(self.request.user, 'is_superuser', False):
             serializer.save()
             return
+        
         admin_id, inst_id = get_tenant_context(self.request.user)
-        serializer.save(admin_id=admin_id, institution_id=inst_id)
+        
+        # If client provided an institution, use it; otherwise use the default context institute
+        provided_inst = self.request.data.get('institution')
+        final_inst_id = provided_inst if provided_inst else inst_id
+        
+        serializer.save(admin_id=admin_id, institution_id=final_inst_id)
 
 class TenantAwareViewSet(TenantAwareMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsTenantOwnerOrStaff]
@@ -43,3 +66,17 @@ class TenantAwareViewSet(TenantAwareMixin, viewsets.ModelViewSet):
 class InstituteViewSet(viewsets.ModelViewSet):
     queryset = Institute.objects.all()
     serializer_class = InstituteSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return Institute.objects.none()
+        if user.is_superuser:
+            return Institute.objects.all().order_by('id')
+        # Each admin only sees their own institutes
+        return Institute.objects.filter(admin=user).order_by('id')
+
+    def perform_create(self, serializer):
+        # Automatically set the logged-in user as the institute admin
+        serializer.save(admin=self.request.user)

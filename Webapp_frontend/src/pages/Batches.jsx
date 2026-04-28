@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
 
 const ENDPOINT = '/batches/';
+const INSTITUTES_ENDPOINT = '/institutes/';
 
-const EMPTY_FORM = { name: '', max_students: '', duration_weeks: '', status: 'active' };
+const EMPTY_FORM = { name: '', max_students: '', duration_weeks: '', status: 'active', institution: '' };
 
 /* ── Tiny helpers ── */
 const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
@@ -39,7 +40,22 @@ function BatchModal({ batch, onClose, onSaved }) {
         max_students: batch.max_students,
         duration_weeks: batch.duration_weeks ?? '',
         status: batch.status,
+        institution: batch.institution ?? '',
     } : { ...EMPTY_FORM });
+
+    const [institutes, setInstitutes] = useState([]);
+
+    useEffect(() => {
+        const fetchInstitutes = async () => {
+            try {
+                const { data } = await api.get(INSTITUTES_ENDPOINT);
+                setInstitutes(Array.isArray(data) ? data : (data.results ?? []));
+            } catch (err) {
+                console.error("Failed to load institutes", err);
+            }
+        };
+        fetchInstitutes();
+    }, []);
 
     // Computed end date preview shown in the modal
     const previewEndDate = calcEndDate(
@@ -71,7 +87,8 @@ function BatchModal({ batch, onClose, onSaved }) {
             const payload = {
                 ...form,
                 duration_weeks: form.duration_weeks === '' ? null : Number(form.duration_weeks),
-                max_students: Number(form.max_students)
+                max_students: Number(form.max_students),
+                institution: form.institution === '' ? null : Number(form.institution)
             };
             if (isEdit) {
                 await api.patch(`${ENDPOINT}${batch.id}/`, payload);
@@ -169,18 +186,40 @@ function BatchModal({ batch, onClose, onSaved }) {
                     </div>
 
                     {/* Status */}
-                    <div className="form-group">
-                        <label className="form-label">Status</label>
-                        <select
-                            name="status"
-                            value={form.status}
-                            onChange={handleChange}
-                            className="form-input"
-                            style={{ appearance: 'auto' }}
-                        >
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="form-group">
+                            <label className="form-label">Status</label>
+                            <select
+                                name="status"
+                                value={form.status}
+                                onChange={handleChange}
+                                className="form-input"
+                                style={{ appearance: 'auto' }}
+                            >
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+
+                        {/* Institution */}
+                        <div className="form-group">
+                            <label className="form-label">Institute</label>
+                            <select
+                                name="institution"
+                                value={form.institution}
+                                onChange={handleChange}
+                                className={`form-input${errors.institution ? ' error' : ''}`}
+                                style={{ appearance: 'auto' }}
+                            >
+                                <option value="">Select Institute</option>
+                                {institutes.map(inst => (
+                                    <option key={inst.id} value={inst.id}>
+                                        {inst.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.institution && <span style={errStyle}>{errors.institution}</span>}
+                        </div>
                     </div>
 
                     {errors.non_field_errors && (

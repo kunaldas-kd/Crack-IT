@@ -15,6 +15,7 @@ class BatchSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Batch
         fields = '__all__'
+        read_only_fields = ['admin', 'institution']
 
 
 # ── Subject ───────────────────────────────────────────────────────────────────
@@ -23,6 +24,7 @@ class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Subject
         fields = '__all__'
+        read_only_fields = ['admin', 'institution']
 
 
 # ── Exam ──────────────────────────────────────────────────────────────────────
@@ -31,6 +33,7 @@ class ExamSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Exam
         fields = '__all__'
+        read_only_fields = ['admin', 'institution']
 
 
 # ── Student (Create) ──────────────────────────────────────────────────────────
@@ -46,62 +49,24 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model            = Student
         fields           = '__all__'
-        read_only_fields = ['student_id']   # Auto-generated; never set by client
-
-    def validate_email(self, value):
-        """Ensure no existing auth user already has this email."""
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("An account with this email already exists.")
-        return value
+        read_only_fields = ['student_id', 'admin', 'institution', 'user']   # Auto-managed
 
     def create(self, validated_data):
         """
         On student creation:
         1. Generate a unique student_id.
-        2. Create a linked Django auth User with a random temp password.
-        3. Send credentials to the student's email.
+        2. Create the student record.
         """
         from generators.id_generator import generate_student_id
-        from generators.email_service import send_credentials_email
         from django.db import transaction
-        from django.contrib.auth import get_user_model
-        import random, string
-
-        User = get_user_model()
 
         with transaction.atomic():
             # Generate student ID if not provided
             if 'student_id' not in validated_data:
                 uid = generate_student_id()
                 validated_data['student_id'] = uid
-            else:
-                uid = validated_data['student_id']
 
-            # Generate a random 8-character temporary password
-            chars         = string.ascii_letters + string.digits
-            temp_password = ''.join(random.choice(chars) for _ in range(8))
-
-            # Create the auth user linked to this student
-            user = User.objects.create_user(
-                username=uid,
-                email=validated_data.get('email', ''),
-                password=temp_password,
-            )
-            validated_data['user'] = user
-
-            student   = super().create(validated_data)
-            full_name = f"{validated_data.get('first_name','')} {validated_data.get('last_name','')}".strip()
-
-            # Email the student their login credentials
-            send_credentials_email(
-                to_email=validated_data.get('email', ''),
-                user_name=full_name,
-                uid=uid,
-                password=temp_password,
-                role="Student",
-            )
+            student = super().create(validated_data)
             return student
 
 
@@ -113,6 +78,7 @@ class StudentAcademicSerializer(serializers.ModelSerializer):
     class Meta:
         model  = StudentAcademic
         fields = '__all__'
+        read_only_fields = ['admin', 'institution']
 
 
 # ── Result ────────────────────────────────────────────────────────────────────
@@ -123,6 +89,7 @@ class ResultSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Result
         fields = '__all__'
+        read_only_fields = ['admin', 'institution']
 
 
 # ── Attendance ────────────────────────────────────────────────────────────────
@@ -131,6 +98,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Attendance
         fields = '__all__'
+        read_only_fields = ['admin', 'institution']
 
 
 # ── Fee ───────────────────────────────────────────────────────────────────────
@@ -139,6 +107,7 @@ class FeeSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Fee
         fields = '__all__'
+        read_only_fields = ['admin', 'institution']
 
 
 # ── Payment ───────────────────────────────────────────────────────────────────
@@ -147,6 +116,7 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Payment
         fields = '__all__'
+        read_only_fields = ['admin', 'institution']
 
 
 # ── Student Detail ────────────────────────────────────────────────────────────
@@ -165,6 +135,7 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Student
         fields = '__all__'
+        read_only_fields = ['admin', 'institution']
 
 
 # ── Student Update ────────────────────────────────────────────────────────────
@@ -178,16 +149,4 @@ class StudentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model            = Student
         fields           = '__all__'
-        read_only_fields = ['student_id', 'user']   # Cannot change ID or auth user after creation
-
-    def validate_email(self, value):
-        """Allow the student to keep their own email; only reject if another user has it."""
-        from django.contrib.auth import get_user_model
-        User     = get_user_model()
-        instance = self.instance
-        qs       = User.objects.filter(email=value)
-        if instance and instance.user:
-            qs = qs.exclude(pk=instance.user.pk)   # Exclude self from uniqueness check
-        if qs.exists():
-            raise serializers.ValidationError("An account with this email already exists.")
-        return value
+        read_only_fields = ['student_id', 'user', 'admin', 'institution']   # Cannot change ID or auth user after creation

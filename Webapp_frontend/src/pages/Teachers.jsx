@@ -165,7 +165,7 @@ function DirectoryTab({ teachers, loading, showForm, setShowForm, onAdded }) {
               <label className="form-label">Address</label>
               <input required className="form-input" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
             </div>
-            
+
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: 12, marginTop: 10 }}>
               <button type="submit" className="btn btn-primary" disabled={saving}>
                 {saving ? 'Registering...' : 'Complete Registration'}
@@ -227,7 +227,7 @@ export default function TeachersHub() {
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  
+
   const fetchTeachers = useCallback(() => {
     setLoading(true);
     api.get('/teachers/teachers/')
@@ -235,9 +235,9 @@ export default function TeachersHub() {
       .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
-  
+
   useEffect(() => { fetchTeachers(); }, [fetchTeachers]);
-  
+
   return (
     <div className="page-content animate-in">
       <div style={{

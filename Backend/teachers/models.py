@@ -20,7 +20,7 @@ class Teacher(TenantAwareModel):
     def active_settings(self):
         return self.institute.settings_profile if self.institute else None
 
-class Salary(models.Model):
+class Salary(TenantAwareModel):
     Salary_id = models.CharField(max_length=50, unique=True)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     salary = models.DecimalField(max_digits=10, decimal_places=2)
@@ -36,7 +36,7 @@ class Salary(models.Model):
     def __str__(self):
         return self.Salary_id
 
-class TeacherAttendance(models.Model):
+class TeacherAttendance(TenantAwareModel):
     STATUS_CHOICES = (
         ('Present',  'Present'),
         ('Absent',   'Absent'),

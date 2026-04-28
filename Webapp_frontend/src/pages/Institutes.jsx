@@ -98,7 +98,7 @@ function DirectoryTab({ institutes, loading, showForm, setShowForm, onAdded }) {
     e.preventDefault();
     setSaving(true); setErr(null);
     try {
-      await api.post('/institutes/institutes/', form);
+      await api.post('/institutes/', form);
       setForm(EMPTY_INSTITUTE);
       setShowForm(false);
       onAdded();
@@ -113,7 +113,7 @@ function DirectoryTab({ institutes, loading, showForm, setShowForm, onAdded }) {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this institute? This cannot be undone.")) return;
     try {
-      await api.delete(`/institutes/institutes/${id}/`);
+      await api.delete(`/institutes/${id}/`);
       onAdded();
     } catch {
       alert("Error deleting institute. It might contain active records.");
@@ -272,7 +272,7 @@ export default function InstitutesHub() {
 
   const fetchInst = useCallback((showLoader = false) => {
     if (showLoader) setLoading(true);
-    api.get('/institutes/institutes/')
+    api.get('/institutes/')
       .then(r => setInstitutes(r.data.results || r.data))
       .catch(() => { })
       .finally(() => setLoading(false));

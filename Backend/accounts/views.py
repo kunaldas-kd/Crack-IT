@@ -64,17 +64,6 @@ def register(request):
     except Exception:
         email_sent = False  # Don't block registration if email fails in dev
 
-    # Send credentials email now — raw password is only available here before hashing
-    try:
-        send_credentials_email(
-            to_email=user.email,
-            user_name=user.first_name or user.username,
-            uid=user.username,
-            password=request.data.get('password'),  # raw password, available only at this step
-        )
-    except Exception:
-        pass  # Non-critical: don't block registration if this fails
-
     return Response({
         'message':    'Registration successful. Please check your email for the OTP.',
         'email':      user.email,
@@ -118,7 +107,16 @@ def verify_otp(request):
     # ✅ Mark as verified and activate user
     record.is_verified = True
     record.save()
-
+    if record.is_verified == True:
+        send_credentials_email(
+            to_email=user.email,
+            user_name=user.first_name or user.username,
+            uid=user.username,
+            password=request.data.get('password'),
+        )
+    else:
+        return Response({'error': 'Invalid OTP code.'}, status=status.HTTP_400_BAD_REQUEST)
+    
     user.is_active = True
     user.save()
 

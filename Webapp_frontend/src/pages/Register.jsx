@@ -164,7 +164,11 @@ export default function Register() {
     setLoading(true);
     setErrors({});
     try {
-      await api.post('/accounts/verify-otp/', { email: form.email, otp_code: code });
+      await api.post('/accounts/verify-otp/', {
+        email: form.email,
+        otp_code: code,
+        password: form.password,  // needed for credentials email on the backend
+      });
       setSuccess('Email verified! Redirecting to login…');
       setTimeout(() => navigate('/login', { state: { verified: true } }), 2000);
     } catch (err) {
