@@ -48,17 +48,33 @@ class TenantAwareMixin:
         return qs.none()
 
     def perform_create(self, serializer):
+        provided_inst = self.request.data.get('institution')
+        
+        # If an institution was explicitly provided, find its admin to ensure data continuity
+        final_inst_id = None
+        final_admin_id = None
+        
+        if provided_inst:
+            try:
+                inst = Institute.objects.get(id=provided_inst)
+                final_inst_id = inst.id
+                final_admin_id = inst.admin_id
+            except Institute.DoesNotExist:
+                pass
+                
+        # If not provided or invalid, fallback to the logged-in user's context
+        if not final_inst_id:
+            final_admin_id, final_inst_id = get_tenant_context(self.request.user)
+            
         if getattr(self.request.user, 'is_superuser', False):
-            serializer.save()
+            # Superusers can save without context if they don't provide an institution
+            if final_inst_id:
+                serializer.save(admin_id=final_admin_id, institution_id=final_inst_id)
+            else:
+                serializer.save()
             return
         
-        admin_id, inst_id = get_tenant_context(self.request.user)
-        
-        # If client provided an institution, use it; otherwise use the default context institute
-        provided_inst = self.request.data.get('institution')
-        final_inst_id = provided_inst if provided_inst else inst_id
-        
-        serializer.save(admin_id=admin_id, institution_id=final_inst_id)
+        serializer.save(admin_id=final_admin_id, institution_id=final_inst_id)
 
 class TenantAwareViewSet(TenantAwareMixin, viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsTenantOwnerOrStaff]
