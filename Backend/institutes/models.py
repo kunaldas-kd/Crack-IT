@@ -12,6 +12,7 @@ class Institute(models.Model):
         default=generate_institution_id,  # Auto-generated on creation
         editable=False,
     )
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='institutes', null=True, blank=True)
     contact_email = models.EmailField()
     phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
@@ -24,3 +25,10 @@ class Institute(models.Model):
 
     def __str__(self):
         return self.name
+
+class TenantAwareModel(models.Model):
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    institution = models.ForeignKey('institutes.Institute', on_delete=models.CASCADE, null=True, blank=True)
+
+    class Meta:
+        abstract = True

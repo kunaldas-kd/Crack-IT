@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from batch.models import Batch
-from institutes.models import Institute
+from institutes.models import Institute, TenantAwareModel
 User = settings.AUTH_USER_MODEL
 
 
@@ -21,7 +21,7 @@ User = settings.AUTH_USER_MODEL
 # ── Subject ───────────────────────────────────────────────────────────────────
 # A subject belongs to a specific batch and semester.
 
-class Subject(models.Model):
+class Subject(TenantAwareModel):
     subject_name = models.CharField(max_length=255)
     batch        = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='subjects')  # Parent batch
     semester     = models.IntegerField()                                                         # Semester number
@@ -33,7 +33,7 @@ class Subject(models.Model):
 # ── Exam ──────────────────────────────────────────────────────────────────────
 # An exam is tied to a batch and semester with a scheduled date.
 
-class Exam(models.Model):
+class Exam(TenantAwareModel):
     exam_name = models.CharField(max_length=255)
     batch     = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='exams')  # Parent batch
     semester  = models.IntegerField()
@@ -47,7 +47,7 @@ class Exam(models.Model):
 # Core model representing a student. Optionally linked to a Django auth User
 # for login access, and to a Batch and Institution.
 
-class Student(models.Model):
+class Student(TenantAwareModel):
     GENDER_CHOICES = (
         ('Male', 'Male'),
         ('Female', 'Female'),
@@ -80,11 +80,7 @@ class Student(models.Model):
     batch       = models.ForeignKey(
         Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name='students',
     )
-    # Institutional affiliation
-    institution = models.ForeignKey(
-        Institute, on_delete=models.SET_NULL,
-        null=True, blank=True, related_name='students',
-    )
+    # Institutional affiliation handled by TenantAwareModel
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.student_id})"
@@ -101,7 +97,7 @@ class Student(models.Model):
 # ── StudentAcademic ───────────────────────────────────────────────────────────
 # Stores marks and grade for a student in a specific subject and semester.
 
-class StudentAcademic(models.Model):
+class StudentAcademic(TenantAwareModel):
     student  = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='academics')
     subject  = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='student_academics')
     semester = models.IntegerField()
@@ -115,7 +111,7 @@ class StudentAcademic(models.Model):
 # ── Result ────────────────────────────────────────────────────────────────────
 # Stores the overall result of a student for a particular exam.
 
-class Result(models.Model):
+class Result(TenantAwareModel):
     student        = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='results')
     exam           = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='results')
     total_marks    = models.IntegerField()
@@ -130,7 +126,7 @@ class Result(models.Model):
 # ── Attendance ────────────────────────────────────────────────────────────────
 # Tracks daily attendance status for each student.
 
-class Attendance(models.Model):
+class Attendance(TenantAwareModel):
     STATUS_CHOICES = (
         ('Present',  'Present'),
         ('Absent',   'Absent'),
@@ -148,7 +144,7 @@ class Attendance(models.Model):
 # ── Fee ───────────────────────────────────────────────────────────────────────
 # One-to-one fee record per student tracking total, paid, and due amounts.
 
-class Fee(models.Model):
+class Fee(TenantAwareModel):
     STATUS_CHOICES = (
         ('Paid',    'Paid'),
         ('Partial', 'Partial'),
@@ -167,7 +163,7 @@ class Fee(models.Model):
 # ── Payment ───────────────────────────────────────────────────────────────────
 # Individual payment transactions made by a student.
 
-class Payment(models.Model):
+class Payment(TenantAwareModel):
     student      = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='payments')
     amount       = models.DecimalField(max_digits=10, decimal_places=2)
     payment_date = models.DateField()

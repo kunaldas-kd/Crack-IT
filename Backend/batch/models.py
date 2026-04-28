@@ -1,8 +1,8 @@
 from django.db import models
 from datetime import date, timedelta
+from institutes.models import TenantAwareModel
 
-
-class Batch(models.Model):
+class Batch(TenantAwareModel):
     name = models.CharField(max_length=100)
     start_date = models.DateField(default=date.today)
     duration_weeks = models.PositiveIntegerField(
@@ -22,11 +22,6 @@ class Batch(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    institution = models.ForeignKey(
-        'institutes.Institute', on_delete=models.CASCADE,
-        null=True, blank=True, related_name='batches'
-    )
 
     def __str__(self):
         return self.name

@@ -150,6 +150,24 @@ class UserTokenSessionSerializer(serializers.ModelSerializer):
         
 # Custom Serializer for JWT Login (Token Obtain Pair)
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        
+        # Add tenant context
+        own_institute = user.institutes.first()
+        if own_institute:
+            token['admin_id'] = user.id
+            token['institution_id'] = own_institute.id
+        elif hasattr(user, 'userprofile') and user.userprofile.institute:
+            token['admin_id'] = user.userprofile.institute.admin_id
+            token['institution_id'] = user.userprofile.institute_id
+        else:
+            token['admin_id'] = None
+            token['institution_id'] = None
+            
+        return token
+
     def validate(self, attrs):
         """
         Overrides the validate method to support login via Email or User ID.
@@ -174,4 +192,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Include both tokens in the response
         data['refresh'] = str(refresh)
         data['access'] = str(refresh.access_token)
+        data['admin_id'] = refresh.get('admin_id')
+        data['institution_id'] = refresh.get('institution_id')
         return data

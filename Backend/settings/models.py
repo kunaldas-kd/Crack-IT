@@ -1,6 +1,7 @@
 from django.db import models
+from institutes.models import TenantAwareModel
 
-class Settings(models.Model):
+class Settings(TenantAwareModel):
     id = models.AutoField(primary_key=True)
     company_name = models.CharField(max_length=100)
     company_logo = models.ImageField(upload_to='logo/')
@@ -17,7 +18,7 @@ class Settings(models.Model):
         verbose_name_plural = "Settings"
 
 
-class EnableFeatures(models.Model):
+class EnableFeatures(TenantAwareModel):
     Student_Management = models.BooleanField(default=True)
     Staff_Management = models.BooleanField(default=True)
     Course_and_Batch_Management = models.BooleanField(default=True)

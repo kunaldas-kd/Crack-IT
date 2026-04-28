@@ -2,10 +2,11 @@ from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpda
 from rest_framework.response import Response
 from .models import Settings, EnableFeatures
 from .serializers import SettingsSerializer, EnableFeaturesSerializer, ListEnableFeaturesSerializer
+from institutes.views import TenantAwareMixin
 
 
 
-class SettingsView(ListCreateAPIView):
+class SettingsView(TenantAwareMixin, ListCreateAPIView):
     queryset = Settings.objects.all()
     serializer_class = SettingsSerializer
     def list(self, request, *args, **kwargs):
@@ -15,12 +16,12 @@ class SettingsView(ListCreateAPIView):
         return Response({
             'message': 'No settings found'
         })
-class SettingsUpdateView(RetrieveUpdateAPIView):
+class SettingsUpdateView(TenantAwareMixin, RetrieveUpdateAPIView):
     queryset = Settings.objects.all()
     serializer_class = SettingsSerializer
     lookup_field = 'pk'
 
-class EnableFeaturesView(ListCreateAPIView):
+class EnableFeaturesView(TenantAwareMixin, ListCreateAPIView):
     queryset = EnableFeatures.objects.all()
     serializer_class = EnableFeaturesSerializer
     def list(self, request, *args, **kwargs):
@@ -31,11 +32,11 @@ class EnableFeaturesView(ListCreateAPIView):
             'message': 'No feature flags found'
         })
     
-class EnableFeaturesUpdateView(RetrieveUpdateAPIView):
+class EnableFeaturesUpdateView(TenantAwareMixin, RetrieveUpdateAPIView):
     queryset = EnableFeatures.objects.all()
     serializer_class = EnableFeaturesSerializer
     lookup_field = 'pk'
 
-class ListEnableFeaturesView(ListAPIView):
+class ListEnableFeaturesView(TenantAwareMixin, ListAPIView):
     queryset = EnableFeatures.objects.all()
     serializer_class = ListEnableFeaturesSerializer

@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from institutes.views import TenantAwareViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
@@ -22,7 +23,7 @@ from .serializers import (
 # ── Subject ───────────────────────────────────────────────────────────────────
 # Full CRUD for subjects. Requires authentication.
 
-class SubjectViewSet(viewsets.ModelViewSet):
+class SubjectViewSet(TenantAwareViewSet):
     queryset           = Subject.objects.all()
     serializer_class   = SubjectSerializer
     permission_classes = [IsAuthenticated]
@@ -31,7 +32,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
 # ── Exam ──────────────────────────────────────────────────────────────────────
 # Full CRUD for exams. Requires authentication.
 
-class ExamViewSet(viewsets.ModelViewSet):
+class ExamViewSet(TenantAwareViewSet):
     queryset           = Exam.objects.all()
     serializer_class   = ExamSerializer
     permission_classes = [IsAuthenticated]
@@ -43,7 +44,7 @@ class ExamViewSet(viewsets.ModelViewSet):
 #   - retrieve     → StudentDetailSerializer (nested full profile)
 #   - update/patch → StudentUpdateSerializer (skips own-email uniqueness check)
 
-class StudentViewSet(viewsets.ModelViewSet):
+class StudentViewSet(TenantAwareViewSet):
     queryset           = Student.objects.select_related('batch', 'institution', 'user').all()
     serializer_class   = StudentSerializer
     permission_classes = [IsAuthenticated]
@@ -74,7 +75,7 @@ class StudentViewSet(viewsets.ModelViewSet):
 # ── StudentAcademic ───────────────────────────────────────────────────────────
 # Full CRUD for individual subject marks per student. Requires authentication.
 
-class StudentAcademicViewSet(viewsets.ModelViewSet):
+class StudentAcademicViewSet(TenantAwareViewSet):
     queryset           = StudentAcademic.objects.all()
     serializer_class   = StudentAcademicSerializer
     permission_classes = [IsAuthenticated]
@@ -83,7 +84,7 @@ class StudentAcademicViewSet(viewsets.ModelViewSet):
 # ── Result ────────────────────────────────────────────────────────────────────
 # Full CRUD for exam results per student. Requires authentication.
 
-class ResultViewSet(viewsets.ModelViewSet):
+class ResultViewSet(TenantAwareViewSet):
     queryset           = Result.objects.all()
     serializer_class   = ResultSerializer
     permission_classes = [IsAuthenticated]
@@ -92,7 +93,7 @@ class ResultViewSet(viewsets.ModelViewSet):
 # ── Attendance ────────────────────────────────────────────────────────────────
 # Full CRUD for daily attendance records. Requires authentication.
 
-class AttendanceViewSet(viewsets.ModelViewSet):
+class AttendanceViewSet(TenantAwareViewSet):
     queryset           = Attendance.objects.all()
     serializer_class   = AttendanceSerializer
     permission_classes = [IsAuthenticated]
@@ -101,7 +102,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 # ── Fee ───────────────────────────────────────────────────────────────────────
 # Full CRUD for student fee records (one per student). Requires authentication.
 
-class FeeViewSet(viewsets.ModelViewSet):
+class FeeViewSet(TenantAwareViewSet):
     queryset           = Fee.objects.all()
     serializer_class   = FeeSerializer
     permission_classes = [IsAuthenticated]
@@ -110,7 +111,7 @@ class FeeViewSet(viewsets.ModelViewSet):
 # ── Payment ───────────────────────────────────────────────────────────────────
 # Full CRUD for individual payment transactions. Requires authentication.
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(TenantAwareViewSet):
     queryset           = Payment.objects.all()
     serializer_class   = PaymentSerializer
     permission_classes = [IsAuthenticated]

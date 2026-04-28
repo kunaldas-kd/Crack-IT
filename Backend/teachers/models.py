@@ -1,16 +1,11 @@
 from django.db import models
-from institutes.models import Institute
+from institutes.models import Institute, TenantAwareModel
 
-class Teacher(models.Model):
-    institute = models.ForeignKey(Institute, on_delete=models.CASCADE)
+class Teacher(TenantAwareModel):
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=15)
     address = models.TextField()
-    institution = models.ForeignKey(
-        Institute, on_delete=models.SET_NULL, 
-        null=True, blank=True, related_name='teachers'
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

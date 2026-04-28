@@ -23,26 +23,18 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True, null=True)
     location = models.CharField(max_length=100, blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
-    institute_name = models.CharField(max_length=255, blank=True, null=True)
+    institute = models.ForeignKey('institutes.Institute', on_delete=models.SET_NULL, null=True, blank=True, related_name='user_profiles')
 
     def __str__(self):
         return f"{self.user.username}'s profile"
 
     @property
     def active_features(self):
-        from institutes.models import Institute
-        if self.institute_name:
-            institute = Institute.objects.filter(name=self.institute_name).first()
-            return institute.features if institute else None
-        return None
+        return self.institute.features if self.institute else None
 
     @property
     def active_settings(self):
-        from institutes.models import Institute
-        if self.institute_name:
-            institute = Institute.objects.filter(name=self.institute_name).first()
-            return institute.settings_profile if institute else None
-        return None
+        return self.institute.settings_profile if self.institute else None
     
 class UserToken(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

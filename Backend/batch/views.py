@@ -1,12 +1,15 @@
 from django.shortcuts import render
-from rest_framework import generics
+from rest_framework import generics, permissions
 from .models import Batch
 from .serializer import BatchSerializer
+from institutes.views import TenantAwareMixin, IsTenantOwnerOrStaff
 
-class BatchListCreateView(generics.ListCreateAPIView):
+class BatchListCreateView(TenantAwareMixin, generics.ListCreateAPIView):
     queryset = Batch.objects.all()
     serializer_class = BatchSerializer
+    permission_classes = [permissions.IsAuthenticated, IsTenantOwnerOrStaff]
 
-class BatchRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class BatchRetrieveUpdateDestroyView(TenantAwareMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Batch.objects.all()
     serializer_class = BatchSerializer
+    permission_classes = [permissions.IsAuthenticated, IsTenantOwnerOrStaff]
